@@ -2,317 +2,615 @@
 <html lang="uz">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Remote Job Mini App</title>
-    <!-- Telegram Web App SDK -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Remote Job Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons for professional SVGs -->
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
-        /* Telegram mavzusiga (Dark/Light) avtomatik moslashish */
         :root {
-            --bg-color: var(--tg-theme-bg-color, #f3f4f6);
-            --text-color: var(--tg-theme-text-color, #1f2937);
+            --bg-color: var(--tg-theme-bg-color, #f8fafc);
+            --text-color: var(--tg-theme-text-color, #0f172a);
             --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-            --btn-color: var(--tg-theme-button-color, #3b82f6);
+            --btn-color: var(--tg-theme-button-color, #2563eb);
             --btn-text: var(--tg-theme-button-text-color, #ffffff);
-            --hint-color: var(--tg-theme-hint-color, #6b7280);
+            --hint-color: var(--tg-theme-hint-color, #64748b);
+            --border-color: rgba(148, 163, 184, 0.15);
         }
+        
         body {
             background-color: var(--bg-color);
             color: var(--text-color);
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, Helvetica, sans-serif;
             -webkit-tap-highlight-color: transparent;
-            transition: background-color 0.3s, color 0.3s;
+            transition: all 0.3s ease;
+            overscroll-behavior-y: none;
         }
-        .tg-card {
-            background-color: var(--card-bg);
-            border: 1px solid rgba(107, 114, 128, 0.1);
+
+        /* Glassmorphism Cards */
+        .glass-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-radius: 1.25rem;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .tg-button {
+        
+        .glass-card:active {
+            transform: scale(0.98);
+        }
+
+        .tg-btn {
             background-color: var(--btn-color);
             color: var(--btn-text);
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.2);
+            transition: opacity 0.2s, transform 0.1s;
         }
-        .tg-hint { color: var(--hint-color); }
         
-        .bottom-nav {
-            background-color: var(--card-bg);
-            border-top: 1px solid rgba(107, 114, 128, 0.1);
+        .tg-btn:active {
+            opacity: 0.8;
+            transform: translateY(1px);
         }
-        .nav-item.active { color: var(--btn-color); }
+
+        /* Bottom Navigation */
+        .nav-bar {
+            background: rgba(var(--card-bg), 0.9);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid var(--border-color);
+            padding-bottom: env(safe-area-inset-bottom);
+        }
         
-        /* Shisha effekti (Glassmorphism) */
-        .glass {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+        .nav-item {
+            color: var(--hint-color);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .nav-item.active {
+            color: var(--btn-color);
+            transform: translateY(-2px);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 0px; height: 0px; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+
+        /* Skeleton Loading Animation */
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
+        }
+        .skeleton {
+            background: linear-gradient(90deg, var(--border-color) 25%, rgba(148,163,184,0.05) 50%, var(--border-color) 75%);
+            background-size: 1000px 100%;
+            animation: shimmer 2s infinite linear;
+            border-radius: 0.5rem;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--text-color);
+            color: var(--bg-color);
+            padding: 12px 24px;
+            border-radius: 99px;
+            font-size: 14px;
+            font-weight: 600;
+            opacity: 0;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            z-index: 1000;
+            white-space: nowrap;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
         }
     </style>
 </head>
-<body class="pb-24">
+<body class="pb-24 antialiased">
 
-    <!-- Header qismi -->
-    <header class="p-4 flex justify-between items-center tg-card shadow-sm sticky top-0 z-50">
-        <div class="flex items-center gap-3">
-            <div id="user-photo" class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
-                U
+    <!-- Header -->
+    <header class="pt-6 pb-4 px-5 sticky top-0 z-40" style="background: rgba(var(--bg-color), 0.85); backdrop-filter: blur(10px);">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <div id="user-avatar" class="w-11 h-11 rounded-full bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                    U
+                </div>
+                <div>
+                    <p class="text-[11px] font-semibold text-blue-500 tracking-wider uppercase mb-0.5">Xush kelibsiz</p>
+                    <h1 class="text-lg font-bold leading-tight" id="user-name">Foydalanuvchi</h1>
+                </div>
             </div>
-            <div>
-                <h1 class="text-sm font-bold" id="user-name">Foydalanuvchi</h1>
-                <p class="text-xs tg-hint" id="user-status">Frilanser</p>
-            </div>
+            <button onclick="tg.close()" class="w-9 h-9 flex items-center justify-center rounded-full glass-card text-[var(--hint-color)]">
+                <i data-lucide="x" class="w-5 h-5"></i>
+            </button>
         </div>
-        <button onclick="tg.close()" class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-        </button>
     </header>
 
-    <!-- 1-TAB: ASOSIY SAHIFA -->
-    <main id="tab-home" class="p-4 space-y-6 tab-content animate-fade-in">
+    <!-- TAB 1: ASOSIY (HOME) -->
+    <main id="tab-home" class="px-5 space-y-6 tab-content transition-opacity duration-300">
+        
+        <!-- Search Bar -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i data-lucide="search" class="w-5 h-5 text-[var(--hint-color)]"></i>
+            </div>
+            <input type="text" id="homeSearchInput" class="w-full pl-11 pr-4 py-3.5 glass-card outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-sm placeholder-[var(--hint-color)] bg-transparent" placeholder="Vakansiya, kiritma, kompaniya...">
+        </div>
+
         <!-- Premium Banner -->
-        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden" onclick="sendToBot('premium')">
+        <div class="relative overflow-hidden rounded-2xl p-6 text-white shadow-xl cursor-pointer transform transition active:scale-95" onclick="sendToBot('premium')" style="background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);">
             <div class="relative z-10">
-                <h2 class="text-lg font-bold mb-1">Premiumga o'ting 🌟</h2>
-                <p class="text-sm opacity-90 mb-3">Cheksiz AI va eng yaxshi vakansiyalar.</p>
-                <button class="bg-white text-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold shadow hover:scale-105 transition">Batafsil</button>
+                <div class="flex items-center gap-2 mb-2">
+                    <span class="bg-white/20 px-2 py-0.5 rounded text-[10px] font-bold tracking-widest uppercase backdrop-blur-sm">PRO Plan</span>
+                </div>
+                <h2 class="text-xl font-extrabold mb-1">Cheksiz imkoniyatlar</h2>
+                <p class="text-sm text-white/80 font-medium max-w-[80%]">AI cover letter va yashirin ishlarni ko'rish.</p>
             </div>
-            <!-- Dekorativ naqsh -->
-            <svg class="absolute right-0 bottom-0 opacity-20 w-32 h-32 transform translate-x-4 translate-y-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
+            <i data-lucide="zap" class="absolute -right-4 -bottom-4 w-32 h-32 text-white/10 transform rotate-12"></i>
         </div>
 
-        <!-- Tezkor Statistika -->
+        <!-- Stats Grid -->
         <div class="grid grid-cols-2 gap-4">
-            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center border-t-4 border-blue-500">
-                <span class="text-2xl font-bold text-blue-500">315+</span>
-                <span class="text-xs tg-hint mt-1 font-medium">Faol ishlar</span>
+            <div class="glass-card p-4 flex flex-col justify-center relative overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center mb-3 text-blue-600">
+                    <i data-lucide="briefcase" class="w-4 h-4"></i>
+                </div>
+                <span class="text-2xl font-black text-[var(--text-color)]" id="stats-jobs">0</span>
+                <span class="text-xs font-semibold text-[var(--hint-color)]">Faol ishlar</span>
             </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center border-t-4 border-purple-500">
-                <span class="text-2xl font-bold text-purple-500">24/7</span>
-                <span class="text-xs tg-hint mt-1 font-medium">AI Yordamchi</span>
+            <div class="glass-card p-4 flex flex-col justify-center relative overflow-hidden">
+                <div class="w-8 h-8 rounded-full bg-purple-100 flex items-center justify-center mb-3 text-purple-600">
+                    <i data-lucide="bot" class="w-4 h-4"></i>
+                </div>
+                <span class="text-2xl font-black text-[var(--text-color)]">24/7</span>
+                <span class="text-xs font-semibold text-[var(--hint-color)]">AI Yordamchi</span>
             </div>
         </div>
 
-        <!-- So'nggi vakansiyalar qismi -->
+        <!-- Hot Jobs (Dynamic) -->
         <div>
-            <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold text-lg">Top Vakansiyalar</h3>
-                <span class="text-xs text-blue-500 font-semibold cursor-pointer" onclick="switchTab('jobs')">Barchasi ➡️</span>
+            <div class="flex justify-between items-end mb-4">
+                <h3 class="font-bold text-lg">Qaynoq vakansiyalar</h3>
+                <span class="text-sm text-blue-500 font-bold cursor-pointer" onclick="switchTab('jobs')">Barchasi</span>
             </div>
-            <div class="space-y-3">
-                <div class="tg-card p-4 rounded-xl shadow-sm cursor-pointer" onclick="openJobLink('https://hh.ru')">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-sm">Senior Python Developer</h4>
-                            <p class="text-xs tg-hint mt-1">🏢 Yandex • 🌍 Masofaviy</p>
-                        </div>
-                        <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-md font-bold">New</span>
-                    </div>
-                </div>
-                <div class="tg-card p-4 rounded-xl shadow-sm cursor-pointer" onclick="openJobLink('https://upwork.com')">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h4 class="font-bold text-sm">UI/UX Designer (Mobile App)</h4>
-                            <p class="text-xs tg-hint mt-1">🏢 Upwork • 🌍 Global</p>
-                        </div>
-                        <span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded-md font-bold">$3000+</span>
-                    </div>
-                </div>
+            <div class="space-y-3" id="homeJobsList">
+                <!-- Javascript orqali to'ldiriladi -->
             </div>
         </div>
     </main>
 
-    <!-- 2-TAB: VAKANSIYALAR RO'YXATI -->
-    <main id="tab-jobs" class="p-4 space-y-4 tab-content hidden animate-fade-in">
-        <h2 class="text-xl font-bold mb-2">Vakansiyalar Katalogi</h2>
+    <!-- TAB 2: JOBS CATALOG -->
+    <main id="tab-jobs" class="px-5 space-y-5 tab-content hidden transition-opacity duration-300">
+        <h2 class="text-2xl font-extrabold tracking-tight">Katalog</h2>
         
-        <!-- Filtrlar -->
-        <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="filter-buttons">
-            <button onclick="filterJobs('all')" class="filter-btn bg-blue-500 text-white text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all shadow-md" data-category="all">Hammasi</button>
-            <button onclick="filterJobs('it')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="it">💻 IT / Dev</button>
-            <button onclick="filterJobs('design')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="design">🎨 Dizayn</button>
-            <button onclick="filterJobs('content')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="content">📝 Matn</button>
+        <!-- Search Bar in Jobs -->
+        <div class="relative">
+            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <i data-lucide="search" class="w-5 h-5 text-[var(--hint-color)]"></i>
+            </div>
+            <input type="text" id="jobsSearchInput" class="w-full pl-11 pr-4 py-3 glass-card outline-none focus:ring-2 focus:ring-blue-500 transition-shadow text-sm placeholder-[var(--hint-color)] bg-transparent" placeholder="Katalogdan qidirish...">
         </div>
 
-        <!-- Vakansiyalar ro'yxati (Mock data) -->
-        <div class="space-y-4 mt-2" id="job-list">
-            
-            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="it">
-                <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center text-xl font-bold">HH</div>
-                    <div>
-                        <h4 class="font-bold text-sm">Full-stack React/Node.js Dev</h4>
-                        <p class="text-xs tg-hint mt-0.5">Andersen • Masofaviy</p>
+        <!-- Categories -->
+        <div class="flex gap-2 overflow-x-auto hide-scroll pb-1 -mx-5 px-5" id="categoryFilters">
+            <button onclick="filterJobs('all')" class="cat-btn bg-blue-600 text-white px-5 py-2 rounded-xl text-sm font-bold shadow-md whitespace-nowrap transition-all" data-category="all">Barchasi</button>
+            <button onclick="filterJobs('it')" class="cat-btn glass-card px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all" data-category="it">Dasturlash</button>
+            <button onclick="filterJobs('design')" class="cat-btn glass-card px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all" data-category="design">Dizayn</button>
+            <button onclick="filterJobs('content')" class="cat-btn glass-card px-5 py-2 rounded-xl text-sm font-semibold whitespace-nowrap transition-all" data-category="content">Kopirayter & SMM</button>
+        </div>
+
+        <!-- Jobs List -->
+        <div class="space-y-4" id="mainJobsList">
+            <!-- Skeleton Loader -->
+            <div id="skeletonLoader" class="space-y-4 hidden">
+                <div class="glass-card p-4 flex gap-4">
+                    <div class="w-12 h-12 rounded-xl skeleton"></div>
+                    <div class="flex-1 space-y-2 py-1">
+                        <div class="h-4 skeleton rounded w-3/4"></div>
+                        <div class="h-3 skeleton rounded w-1/2"></div>
                     </div>
                 </div>
-                <p class="text-xs mb-4 line-clamp-2 tg-hint">Katta xalqaro loyiha uchun tajribali Full-stack dasturchi qidiryapmiz. Ingliz tilini bilish B2 darajada shart...</p>
-                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
-                    <span class="text-xs font-bold tg-hint">2 soat oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://hh.ru')">To'liq ko'rish</button>
-                </div>
-            </div>
-            
-            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="design">
-                <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎨</div>
-                    <div>
-                        <h4 class="font-bold text-sm">Product Designer (Figma)</h4>
-                        <p class="text-xs tg-hint mt-0.5">Payme • O'zbekiston</p>
+                <div class="glass-card p-4 flex gap-4">
+                    <div class="w-12 h-12 rounded-xl skeleton"></div>
+                    <div class="flex-1 space-y-2 py-1">
+                        <div class="h-4 skeleton rounded w-5/6"></div>
+                        <div class="h-3 skeleton rounded w-2/5"></div>
                     </div>
-                </div>
-                <p class="text-xs mb-4 line-clamp-2 tg-hint">Mobil ilova interfeysini yangilash uchun kreativ dizayner kerak. Prototyping va User Testing tajribasi zarur.</p>
-                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
-                    <span class="text-xs font-bold tg-hint">5 soat oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://uzjobs.com')">To'liq ko'rish</button>
                 </div>
             </div>
 
-            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="content">
-                <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-green-50 text-green-500 flex items-center justify-center text-xl">✍️</div>
-                    <div>
-                        <h4 class="font-bold text-sm">SMM Copywriter</h4>
-                        <p class="text-xs tg-hint mt-0.5">Upwork • Global</p>
-                    </div>
-                </div>
-                <p class="text-xs mb-4 line-clamp-2 tg-hint">Kripto loyiha uchun ijtimoiy tarmoqlarga postlar yozish. SEO asoslarini bilish va ChatGPT dan foydalana olish talab etiladi.</p>
-                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
-                    <span class="text-xs font-bold tg-hint">1 kun oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://upwork.com')">To'liq ko'rish</button>
-                </div>
+            <!-- Dynamic Jobs Container -->
+            <div id="jobsContainer" class="space-y-4"></div>
+            
+            <div id="noJobsMsg" class="hidden text-center py-8 text-[var(--hint-color)]">
+                <i data-lucide="search-x" class="w-12 h-12 mx-auto mb-3 opacity-50"></i>
+                <p>Kechirasiz, so'rovingiz bo'yicha vakansiya topilmadi.</p>
             </div>
-
         </div>
     </main>
 
-    <!-- 3-TAB: AI ASBOBLAR -->
-    <main id="tab-ai" class="p-4 space-y-4 tab-content hidden animate-fade-in">
-        <h2 class="text-xl font-bold mb-1">AI Yordamchi</h2>
-        <p class="text-xs tg-hint mb-4">Ushbu asboblarni bosish orqali bot chatiga o'ting va sun'iy intellektdan foydalaning.</p>
+    <!-- TAB 3: AI TOOLS -->
+    <main id="tab-ai" class="px-5 space-y-5 tab-content hidden transition-opacity duration-300">
+        <h2 class="text-2xl font-extrabold tracking-tight">AI Asboblar</h2>
         
-        <div class="grid grid-cols-2 gap-3">
-            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_cl')">
-                <div class="text-3xl mb-2">📝</div>
-                <h3 class="text-sm font-bold text-gray-800">Cover Letter</h3>
-                <p class="text-[10px] tg-hint mt-1">Ishga kirish xati</p>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="glass-card p-5 cursor-pointer flex flex-col items-center justify-center text-center gap-3" onclick="sendToBot('tool_cl')">
+                <div class="w-12 h-12 rounded-2xl bg-blue-100 flex items-center justify-center text-blue-600">
+                    <i data-lucide="file-text" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm">Cover Letter</h3>
+                    <p class="text-[11px] text-[var(--hint-color)] mt-1">Avto yozish</p>
+                </div>
             </div>
-            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_upwork')">
-                <div class="text-3xl mb-2">🚀</div>
-                <h3 class="text-sm font-bold text-gray-800">Upwork Bid</h3>
-                <p class="text-[10px] tg-hint mt-1">Winning Proposal</p>
+
+            <div class="glass-card p-5 cursor-pointer flex flex-col items-center justify-center text-center gap-3" onclick="sendToBot('tool_upwork')">
+                <div class="w-12 h-12 rounded-2xl bg-green-100 flex items-center justify-center text-green-600">
+                    <i data-lucide="rocket" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm">Upwork Bid</h3>
+                    <p class="text-[11px] text-[var(--hint-color)] mt-1">Winning proposal</p>
+                </div>
             </div>
-            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_estimate')">
-                <div class="text-3xl mb-2">💰</div>
-                <h3 class="text-sm font-bold text-gray-800">Narx Tahlili</h3>
-                <p class="text-[10px] tg-hint mt-1">Loyiha narxini bilish</p>
+
+            <div class="glass-card p-5 cursor-pointer flex flex-col items-center justify-center text-center gap-3" onclick="sendToBot('tool_estimate')">
+                <div class="w-12 h-12 rounded-2xl bg-yellow-100 flex items-center justify-center text-yellow-600">
+                    <i data-lucide="calculator" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm">Narxlash</h3>
+                    <p class="text-[11px] text-[var(--hint-color)] mt-1">Loyiha bahosi</p>
+                </div>
             </div>
-            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_interview')">
-                <div class="text-3xl mb-2">🎙</div>
-                <h3 class="text-sm font-bold text-gray-800">Mock Intervyu</h3>
-                <p class="text-[10px] tg-hint mt-1">Suhbatga tayyorlanish</p>
+
+            <div class="glass-card p-5 cursor-pointer flex flex-col items-center justify-center text-center gap-3" onclick="sendToBot('tool_interview')">
+                <div class="w-12 h-12 rounded-2xl bg-red-100 flex items-center justify-center text-red-600">
+                    <i data-lucide="mic" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-sm">Intervyu</h3>
+                    <p class="text-[11px] text-[var(--hint-color)] mt-1">Trening (Mock)</p>
+                </div>
             </div>
-            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition col-span-2 flex items-center justify-center gap-4" onclick="sendToBot('tool_invoice')">
-                <div class="text-3xl">🧾</div>
-                <div class="text-left">
-                    <h3 class="text-sm font-bold text-gray-800">AI Invoice Generator</h3>
-                    <p class="text-[10px] tg-hint mt-0.5">Mijoz uchun rasmiy hisob-faktura yasash</p>
+
+            <div class="glass-card p-5 cursor-pointer col-span-2 flex items-center gap-4" onclick="sendToBot('tool_contract')">
+                <div class="w-12 h-12 rounded-2xl bg-orange-100 flex items-center justify-center text-orange-600 flex-shrink-0">
+                    <i data-lucide="scroll-text" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-[15px]">Shartnoma tuzish</h3>
+                    <p class="text-xs text-[var(--hint-color)] mt-1">Rasmiy NDA va xizmat shartnomasi</p>
+                </div>
+            </div>
+
+            <div class="glass-card p-5 cursor-pointer col-span-2 flex items-center gap-4" onclick="sendToBot('tool_invoice')" style="background: linear-gradient(to right, var(--card-bg), rgba(37, 99, 235, 0.05));">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-100 flex items-center justify-center text-indigo-600 flex-shrink-0">
+                    <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-[15px]">Hisob-faktura (Invoice)</h3>
+                    <p class="text-xs text-[var(--hint-color)] mt-1">Mijozlarga to'lov uchun tayyor hujjat</p>
+                </div>
+                <i data-lucide="chevron-right" class="w-5 h-5 text-[var(--hint-color)] ml-auto"></i>
+            </div>
+        </div>
+    </main>
+
+    <!-- TAB 4: PROFILE & AUTHENTICATION -->
+    <main id="tab-profile" class="px-5 space-y-5 tab-content hidden transition-opacity duration-300">
+        <h2 class="text-2xl font-extrabold tracking-tight">Profil</h2>
+        
+        <!-- Ro'yxatdan o'tish (Auth) qismi -->
+        <div id="authSection" class="glass-card p-6 text-center space-y-5 mt-8">
+            <div class="w-20 h-20 bg-blue-50 rounded-full mx-auto flex items-center justify-center text-blue-500 shadow-inner">
+                <i data-lucide="shield-check" class="w-10 h-10"></i>
+            </div>
+            <div>
+                <h3 class="font-bold text-[17px] mb-2">Ro'yxatdan o'tish</h3>
+                <p class="text-sm text-[var(--hint-color)] px-4">Xavfsizlik va to'liq imkoniyatlardan foydalanish uchun telefon raqamingizni tasdiqlang.</p>
+            </div>
+            
+            <button onclick="requestPhoneAuth()" class="tg-btn w-full py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 text-[15px]">
+                <i data-lucide="smartphone" class="w-5 h-5"></i>
+                Raqamni yuborish
+            </button>
+            <p class="text-[10px] text-[var(--hint-color)] mt-2">Bu ma'lumotlar faqat sizni identifikatsiya qilish uchun ishlatiladi.</p>
+        </div>
+
+        <!-- Avtorizatsiya qilingan Profil qismi -->
+        <div id="profileSection" class="hidden space-y-5">
+            <div class="glass-card p-5 flex items-center gap-4">
+                <div id="profile-avatar" class="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-2xl">
+                    U
+                </div>
+                <div>
+                    <h3 class="font-bold text-lg" id="profile-name">Foydalanuvchi</h3>
+                    <p class="text-sm text-[var(--hint-color)] flex items-center gap-1 mt-1">
+                        <i data-lucide="phone" class="w-3 h-3"></i>
+                        <span id="profile-phone">+998 ** *** ** **</span>
+                    </p>
+                </div>
+                <div class="ml-auto">
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1">
+                        <i data-lucide="check-circle" class="w-3 h-3"></i> Tasdiqlangan
+                    </span>
+                </div>
+            </div>
+
+            <div class="glass-card overflow-hidden">
+                <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center cursor-pointer hover:bg-gray-50/50" onclick="sendToBot('my_cv')">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="file-text" class="w-5 h-5 text-blue-500"></i>
+                        <span class="font-semibold text-sm">Mening rezyumeim</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--hint-color)]"></i>
+                </div>
+                <div class="p-4 border-b border-[var(--border-color)] flex justify-between items-center cursor-pointer hover:bg-gray-50/50" onclick="sendToBot('settings')">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="settings" class="w-5 h-5 text-gray-500"></i>
+                        <span class="font-semibold text-sm">Sozlamalar</span>
+                    </div>
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-[var(--hint-color)]"></i>
+                </div>
+                <div class="p-4 flex justify-between items-center cursor-pointer hover:bg-gray-50/50" onclick="logout()">
+                    <div class="flex items-center gap-3">
+                        <i data-lucide="log-out" class="w-5 h-5 text-red-500"></i>
+                        <span class="font-semibold text-sm text-red-500">Chiqish</span>
+                    </div>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- Bottom Navigation (Pastki Menyu) -->
-    <nav class="bottom-nav fixed bottom-0 w-full flex justify-around items-center pb-safe pt-2 px-2 pb-3 z-50">
-        <button onclick="switchTab('home')" class="nav-item active flex flex-col items-center p-2 w-20 transition-colors" data-target="home">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            <span class="text-[10px] font-bold">Asosiy</span>
+    <!-- Bottom Navigation -->
+    <nav class="nav-bar fixed bottom-0 left-0 right-0 flex justify-around items-center pt-3 z-50">
+        <button onclick="switchTab('home')" class="nav-item active flex flex-col items-center gap-1 w-16" data-target="home">
+            <i data-lucide="home" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-0.5">Asosiy</span>
         </button>
-        <button onclick="switchTab('jobs')" class="nav-item flex flex-col items-center p-2 w-20 tg-hint transition-colors" data-target="jobs">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] font-bold">Ishlar</span>
+        <button onclick="switchTab('jobs')" class="nav-item flex flex-col items-center gap-1 w-16" data-target="jobs">
+            <i data-lucide="briefcase" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-0.5">Ishlar</span>
         </button>
-        <button onclick="switchTab('ai')" class="nav-item flex flex-col items-center p-2 w-20 tg-hint transition-colors" data-target="ai">
-            <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            <span class="text-[10px] font-bold">AI Tools</span>
+        <button onclick="switchTab('ai')" class="nav-item flex flex-col items-center gap-1 w-16" data-target="ai">
+            <i data-lucide="sparkles" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-0.5">AI Tools</span>
+        </button>
+        <button onclick="switchTab('profile')" class="nav-item flex flex-col items-center gap-1 w-16" data-target="profile">
+            <i data-lucide="user" class="w-6 h-6"></i>
+            <span class="text-[10px] font-bold mt-0.5">Profil</span>
         </button>
     </nav>
 
+    <!-- Toast Component -->
+    <div id="toast" class="toast">Harakat bajarildi</div>
+
     <script>
-        // Telegram Web App API
+        lucide.createIcons();
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Ekranni to'liq egallash
+        tg.expand();
         tg.ready();
 
-        // Agar mavzu o'zgarsa, WebApp foni ham o'zgaradi
-        tg.setHeaderColor('secondary_bg_color');
+        // Theme Setup
+        document.documentElement.style.setProperty('--bg-color', tg.themeParams.bg_color || '#f8fafc');
+        document.documentElement.style.setProperty('--text-color', tg.themeParams.text_color || '#0f172a');
+        document.documentElement.style.setProperty('--card-bg', tg.themeParams.secondary_bg_color || '#ffffff');
+        document.documentElement.style.setProperty('--btn-color', tg.themeParams.button_color || '#2563eb');
+        document.documentElement.style.setProperty('--btn-text', tg.themeParams.button_text_color || '#ffffff');
+        document.documentElement.style.setProperty('--hint-color', tg.themeParams.hint_color || '#64748b');
 
-        // Foydalanuvchi ma'lumotlarini yuklash
-        if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-            const user = tg.initDataUnsafe.user;
-            document.getElementById('user-name').innerText = user.first_name;
-            document.getElementById('user-photo').innerText = user.first_name.charAt(0).toUpperCase();
+        // Initial Data Setup
+        if (tg.initDataUnsafe?.user) {
+            const u = tg.initDataUnsafe.user;
+            document.getElementById('user-name').innerText = u.first_name;
+            document.getElementById('user-avatar').innerText = u.first_name.charAt(0);
+            document.getElementById('profile-name').innerText = `${u.first_name} ${u.last_name || ''}`;
+            document.getElementById('profile-avatar').innerText = u.first_name.charAt(0);
             if(user.is_premium) {
                 document.getElementById('user-status').innerText = "Premium Frilanser 💎";
                 document.getElementById('user-status').classList.add('text-purple-500');
             }
         }
 
-        // Tablarni almashtirish funksiyasi
+        // ==========================================
+        // JOBS DATABASE (MOCK DATA)
+        // ==========================================
+        const jobsDatabase = [
+            { id: 1, title: "Senior Python Developer", company: "Yandex", location: "Masofaviy", source: "HH", cat: "it", date: "1 soat oldin", price: "$3000 - $4500", link: "https://hh.ru", desc: "Katta yuklamali tizimlar uchun Python mutaxassisi kerak." },
+            { id: 2, title: "React Frontend Engineer", company: "Andersen", location: "Global", source: "HH", cat: "it", date: "2 soat oldin", price: "$2000 - $3500", link: "https://hh.ru", desc: "Xalqaro loyiha uchun React, Typescript, Redux bilimi shart." },
+            { id: 3, title: "Go Backend Developer", company: "Uzum", location: "O'zbekiston", source: "UJ", cat: "it", date: "4 soat oldin", price: "Kelishuv", link: "https://uzjobs.uz", desc: "Fintech yo'nalishida Go tilida mikrosevislar yozish." },
+            { id: 4, title: "Product UI/UX Designer", company: "Payme", location: "O'zbekiston", source: "UJ", cat: "design", date: "5 soat oldin", price: "Kelishuv", link: "https://uzjobs.uz", desc: "Mobil ilova dizaynini yaratish, Figma va Prototyping." },
+            { id: 5, title: "Motion Graphic Designer", company: "Artel", location: "O'zbekiston", source: "UJ", cat: "design", date: "1 kun oldin", price: "Kelishuv", link: "https://uzjobs.uz", desc: "Reklama roliklari uchun 2D/3D animatsiyalar tayyorlash." },
+            { id: 6, title: "SMM Copywriter", company: "Upwork Client", location: "Global", source: "UP", cat: "content", date: "1 kun oldin", price: "$15/soat", link: "https://upwork.com", desc: "Kripto loyiha uchun ijtimoiy tarmoqlarga postlar yozish. SEO asoslari." },
+            { id: 7, title: "Technical Writer (English)", company: "EPAM", location: "Global", source: "LI", cat: "content", date: "2 kun oldin", price: "$2000+", link: "https://linkedin.com", desc: "IT loyihalar uchun texnik hujjatlar va qo'llanmalar yozish." },
+            { id: 8, title: "Data Analyst", company: "Jooble", location: "Global", source: "JB", cat: "it", date: "3 kun oldin", price: "$1500+", link: "https://jooble.org", desc: "SQL va Python orqali ma'lumotlarni tahlil qilish." },
+            { id: 9, title: "Flutter Mobile Dev", company: "Click", location: "O'zbekiston", source: "HH", cat: "it", date: "Yaqinda", price: "Kelishuv", link: "https://hh.ru", desc: "Krossplatformali ilova yaratish uchun Flutter dasturchi." },
+            { id: 10, title: "Brand Identity Designer", company: "Upwork", location: "Global", source: "UP", cat: "design", date: "Yaqinda", price: "$500 (Fixed)", link: "https://upwork.com", desc: "Yangi startap uchun logotip va brendbuk tayyorlash." }
+        ];
+
+        document.getElementById('stats-jobs').innerText = jobsDatabase.length;
+
+        // Render Jobs Function
+        function renderJobs(jobs, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            if(jobs.length === 0 && containerId === 'jobsContainer') {
+                document.getElementById('noJobsMsg').classList.remove('hidden');
+                return;
+            } else if (containerId === 'jobsContainer') {
+                document.getElementById('noJobsMsg').classList.add('hidden');
+            }
+
+            jobs.forEach(job => {
+                let iconStr = '', colorClass = '', bgClass = '';
+                if(job.source === 'HH') { iconStr = 'HH'; colorClass = 'text-blue-600'; bgClass = 'bg-blue-50'; }
+                else if(job.source === 'UJ') { iconStr = 'UJ'; colorClass = 'text-purple-600'; bgClass = 'bg-purple-50'; }
+                else if(job.source === 'UP') { iconStr = 'UP'; colorClass = 'text-green-600'; bgClass = 'bg-green-50'; }
+                else { iconStr = '🏢'; colorClass = 'text-gray-600'; bgClass = 'bg-gray-100'; }
+
+                const html = `
+                    <div class="job-item glass-card p-5 cursor-pointer hover:shadow-lg transition-shadow" onclick="openJobLink('${job.link}')">
+                        <div class="flex justify-between items-start mb-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-lg ${bgClass} ${colorClass} flex items-center justify-center font-black text-sm">${iconStr}</div>
+                                <div>
+                                    <h4 class="font-bold text-[15px] leading-tight text-[var(--text-color)]">${job.title}</h4>
+                                    <p class="text-[11px] text-[var(--hint-color)] mt-0.5">${job.company} • ${job.location}</p>
+                                </div>
+                            </div>
+                            <i data-lucide="arrow-up-right" class="w-4 h-4 text-[var(--hint-color)]"></i>
+                        </div>
+                        <p class="text-[12px] text-[var(--hint-color)] line-clamp-2 leading-relaxed mb-4">${job.desc}</p>
+                        <div class="flex justify-between items-center">
+                            <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded border border-gray-200 text-[10px] font-bold">${job.price}</span>
+                            <span class="text-[10px] font-bold text-[var(--hint-color)] flex items-center gap-1"><i data-lucide="clock" class="w-3 h-3"></i> ${job.date}</span>
+                        </div>
+                    </div>
+                `;
+                container.innerHTML += html;
+            });
+            lucide.createIcons();
+        }
+
+        // Initial Render
+        renderJobs(jobsDatabase.slice(0, 2), 'homeJobsList'); // Top 2 for home
+        renderJobs(jobsDatabase, 'jobsContainer'); // All for catalog
+
+        // ==========================================
+        // SEARCH AND FILTER LOGIC
+        // ==========================================
+        function handleSearch(e) {
+            const query = e.target.value.toLowerCase();
+            const filtered = jobsDatabase.filter(j => 
+                j.title.toLowerCase().includes(query) || 
+                j.company.toLowerCase().includes(query)
+            );
+            
+            if(document.getElementById('tab-home').classList.contains('hidden') === false && query.length > 0) {
+                switchTab('jobs');
+                const jobsInput = document.getElementById('jobsSearchInput');
+                if(jobsInput) jobsInput.value = query;
+            }
+            renderJobs(filtered, 'jobsContainer');
+        }
+
+        const homeSearchInput = document.getElementById('homeSearchInput');
+        if (homeSearchInput) homeSearchInput.addEventListener('input', handleSearch);
+
+        const jobsSearchInput = document.getElementById('jobsSearchInput');
+        if (jobsSearchInput) jobsSearchInput.addEventListener('input', handleSearch);
+
+        function filterJobs(category) {
+            tg.HapticFeedback.impactOccurred('light');
+            
+            document.querySelectorAll('.cat-btn').forEach(btn => {
+                if (btn.dataset.category === category) {
+                    btn.classList.add('bg-blue-600', 'text-white', 'shadow-md');
+                    btn.classList.remove('glass-card', 'text-[var(--text-color)]');
+                } else {
+                    btn.classList.remove('bg-blue-600', 'text-white', 'shadow-md');
+                    btn.classList.add('glass-card', 'text-[var(--text-color)]');
+                }
+            });
+
+            document.getElementById('jobsContainer').classList.add('hidden');
+            const loader = document.getElementById('skeletonLoader');
+            loader.classList.remove('hidden');
+
+            setTimeout(() => {
+                loader.classList.add('hidden');
+                document.getElementById('jobsContainer').classList.remove('hidden');
+                
+                const filtered = category === 'all' 
+                    ? jobsDatabase 
+                    : jobsDatabase.filter(j => j.cat === category);
+                
+                renderJobs(filtered, 'jobsContainer');
+            }, 300); 
+        }
+
+        // ==========================================
+        // UI INTERACTIONS & AUTH
+        // ==========================================
         function switchTab(tabId) {
-            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            tg.HapticFeedback.selectionChanged();
+            document.querySelectorAll('.tab-content').forEach(el => {
+                el.classList.add('hidden');
+                el.style.opacity = '0';
+            });
+            const targetTab = document.getElementById(`tab-${tabId}`);
+            targetTab.classList.remove('hidden');
+            setTimeout(() => targetTab.style.opacity = '1', 50);
 
             document.querySelectorAll('.nav-item').forEach(el => {
                 el.classList.remove('active');
-                el.classList.add('tg-hint');
-                if(el.dataset.target === tabId) {
-                    el.classList.add('active');
-                    el.classList.remove('tg-hint');
-                }
-            });
-            // Haptic feedback (Vibratsiya effekti)
-            tg.HapticFeedback.selectionChanged();
-        }
-
-        // Ishlarni filtrlash
-        function filterJobs(category) {
-            tg.HapticFeedback.impactOccurred('light');
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                if (btn.dataset.category === category) {
-                    btn.classList.add('bg-blue-500', 'text-white', 'shadow-md');
-                    btn.classList.remove('tg-card');
-                } else {
-                    btn.classList.remove('bg-blue-500', 'text-white', 'shadow-md');
-                    btn.classList.add('tg-card');
-                }
-            });
-
-            document.querySelectorAll('.job-card').forEach(card => {
-                if (category === 'all' || card.dataset.category === category) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
+                if(el.dataset.target === tabId) el.classList.add('active');
             });
         }
 
-        // Saytni ochish funksiyasi
+        function showToast(msg) {
+            const toast = document.getElementById('toast');
+            toast.innerText = msg;
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+
         function openJobLink(url) {
+            tg.HapticFeedback.impactOccurred('light');
             tg.openLink(url);
         }
 
-        // Botga buyruq yuborish va oynani yopish
         function sendToBot(action) {
             tg.HapticFeedback.impactOccurred('medium');
+            showToast('Botga yo\'naltirilmoqda...');
             
-            // Xabar yuborish (Faqat Keyboard Button orqali ishlaganda sendData ishlaydi)
-            try {
-                tg.sendData(JSON.stringify({action: action}));
-            } catch (e) {
-                // Agar Inline tugmadan ochilgan bo'lsa, xabar yuborish uchun showAlert ishlatamiz
-                tg.showAlert("Ushbu funksiyani ishlatish uchun bot chatiga qayting va menyudan tanlang!");
+            setTimeout(() => {
+                try {
+                    tg.sendData(JSON.stringify({action: action}));
+                    tg.close();
+                } catch (e) {
+                    showToast("Bot menyusi orqali oching!");
+                }
+            }, 600);
+        }
+
+        // Authentication Logic using tg.requestContact
+        function requestPhoneAuth() {
+            tg.HapticFeedback.impactOccurred('heavy');
+            
+            if (tg.requestContact) {
+                tg.requestContact((shared) => {
+                    if (shared) {
+                        showToast("Muvaffaqiyatli kirdingiz!");
+                        document.getElementById('authSection').classList.add('hidden');
+                        document.getElementById('profileSection').classList.remove('hidden');
+                    } else {
+                        showToast("Tasdiqlash bekor qilindi.");
+                    }
+                });
+            } else {
+                // Agar eski Telegram versiyasi bo'lsa
+                showToast("Telegramni yangilang yoki bot orqali kiring.");
+                setTimeout(() => {
+                    document.getElementById('authSection').classList.add('hidden');
+                    document.getElementById('profileSection').classList.remove('hidden');
+                }, 1500);
             }
-            
-            setTimeout(() => { tg.close(); }, 1500);
+        }
+
+        function logout() {
+            tg.HapticFeedback.impactOccurred('light');
+            document.getElementById('profileSection').classList.add('hidden');
+            document.getElementById('authSection').classList.remove('hidden');
+            showToast("Tizimdan chiqdingiz");
         }
     </script>
 </body>
