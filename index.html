@@ -9,84 +9,97 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* Telegram mavzusiga avtomatik moslashuvchi o'zgaruvchilar */
+        /* Telegram mavzusiga (Dark/Light) avtomatik moslashish */
+        :root {
+            --bg-color: var(--tg-theme-bg-color, #f3f4f6);
+            --text-color: var(--tg-theme-text-color, #1f2937);
+            --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+            --btn-color: var(--tg-theme-button-color, #3b82f6);
+            --btn-text: var(--tg-theme-button-text-color, #ffffff);
+            --hint-color: var(--tg-theme-hint-color, #6b7280);
+        }
         body {
-            background-color: var(--tg-theme-bg-color, #f3f4f6);
-            color: var(--tg-theme-text-color, #1f2937);
+            background-color: var(--bg-color);
+            color: var(--text-color);
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             -webkit-tap-highlight-color: transparent;
+            transition: background-color 0.3s, color 0.3s;
         }
         .tg-card {
-            background-color: var(--tg-theme-secondary-bg-color, #ffffff);
-            border: 1px solid var(--tg-theme-hint-color, #e5e7eb);
-            opacity: 0.9;
+            background-color: var(--card-bg);
+            border: 1px solid rgba(107, 114, 128, 0.1);
         }
         .tg-button {
-            background-color: var(--tg-theme-button-color, #3b82f6);
-            color: var(--tg-theme-button-text-color, #ffffff);
+            background-color: var(--btn-color);
+            color: var(--btn-text);
         }
-        .tg-hint {
-            color: var(--tg-theme-hint-color, #6b7280);
-        }
+        .tg-hint { color: var(--hint-color); }
+        
         .bottom-nav {
-            background-color: var(--tg-theme-bg-color, #ffffff);
-            border-top: 1px solid var(--tg-theme-hint-color, #e5e7eb);
+            background-color: var(--card-bg);
+            border-top: 1px solid rgba(107, 114, 128, 0.1);
         }
-        .nav-item.active {
-            color: var(--tg-theme-button-color, #3b82f6);
+        .nav-item.active { color: var(--btn-color); }
+        
+        /* Shisha effekti (Glassmorphism) */
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
     </style>
 </head>
-<body class="pb-20 transition-colors duration-300">
+<body class="pb-24">
 
-    <!-- Header -->
+    <!-- Header qismi -->
     <header class="p-4 flex justify-between items-center tg-card shadow-sm sticky top-0 z-50">
         <div class="flex items-center gap-3">
-            <div id="user-photo" class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg">
+            <div id="user-photo" class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold text-lg shadow-md">
                 U
             </div>
             <div>
                 <h1 class="text-sm font-bold" id="user-name">Foydalanuvchi</h1>
-                <p class="text-xs tg-hint">Frilanser</p>
+                <p class="text-xs tg-hint" id="user-status">Frilanser</p>
             </div>
         </div>
-        <button class="p-2 rounded-full bg-blue-100 text-blue-600">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+        <button onclick="tg.close()" class="p-2 rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
         </button>
     </header>
 
-    <!-- TAB: HOME -->
-    <main id="tab-home" class="p-4 space-y-6 tab-content">
+    <!-- 1-TAB: ASOSIY SAHIFA -->
+    <main id="tab-home" class="p-4 space-y-6 tab-content animate-fade-in">
         <!-- Premium Banner -->
-        <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-5 text-white shadow-lg relative overflow-hidden" onclick="sendToBot('premium')">
             <div class="relative z-10">
                 <h2 class="text-lg font-bold mb-1">Premiumga o'ting 🌟</h2>
                 <p class="text-sm opacity-90 mb-3">Cheksiz AI va eng yaxshi vakansiyalar.</p>
-                <button class="bg-white text-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold shadow" onclick="alert('Bot orqali premium xarid qiling!')">Batafsil</button>
+                <button class="bg-white text-indigo-600 px-4 py-2 rounded-lg text-sm font-semibold shadow hover:scale-105 transition">Batafsil</button>
             </div>
+            <!-- Dekorativ naqsh -->
             <svg class="absolute right-0 bottom-0 opacity-20 w-32 h-32 transform translate-x-4 translate-y-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path></svg>
         </div>
 
-        <!-- Quick Stats -->
+        <!-- Tezkor Statistika -->
         <div class="grid grid-cols-2 gap-4">
-            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
+            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center border-t-4 border-blue-500">
                 <span class="text-2xl font-bold text-blue-500">315+</span>
-                <span class="text-xs tg-hint mt-1">Yangi ishlar</span>
+                <span class="text-xs tg-hint mt-1 font-medium">Faol ishlar</span>
             </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center">
-                <span class="text-2xl font-bold text-purple-500">∞</span>
-                <span class="text-xs tg-hint mt-1">AI Limit (VIP)</span>
+            <div class="tg-card p-4 rounded-2xl shadow-sm flex flex-col items-center justify-center border-t-4 border-purple-500">
+                <span class="text-2xl font-bold text-purple-500">24/7</span>
+                <span class="text-xs tg-hint mt-1 font-medium">AI Yordamchi</span>
             </div>
         </div>
 
-        <!-- Recent Jobs Preview -->
+        <!-- So'nggi vakansiyalar qismi -->
         <div>
             <div class="flex justify-between items-center mb-3">
-                <h3 class="font-bold">So'nggi vakansiyalar</h3>
-                <span class="text-xs text-blue-500 font-semibold cursor-pointer" onclick="switchTab('jobs')">Barchasi</span>
+                <h3 class="font-bold text-lg">Top Vakansiyalar</h3>
+                <span class="text-xs text-blue-500 font-semibold cursor-pointer" onclick="switchTab('jobs')">Barchasi ➡️</span>
             </div>
             <div class="space-y-3">
-                <div class="tg-card p-4 rounded-xl shadow-sm border-l-4 border-blue-500">
+                <div class="tg-card p-4 rounded-xl shadow-sm cursor-pointer" onclick="openJobLink('https://hh.ru')">
                     <div class="flex justify-between items-start">
                         <div>
                             <h4 class="font-bold text-sm">Senior Python Developer</h4>
@@ -95,11 +108,11 @@
                         <span class="bg-blue-100 text-blue-800 text-[10px] px-2 py-1 rounded-md font-bold">New</span>
                     </div>
                 </div>
-                <div class="tg-card p-4 rounded-xl shadow-sm border-l-4 border-green-500">
+                <div class="tg-card p-4 rounded-xl shadow-sm cursor-pointer" onclick="openJobLink('https://upwork.com')">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h4 class="font-bold text-sm">UI/UX Designer</h4>
-                            <p class="text-xs tg-hint mt-1">🏢 MetaDesign • 🌍 Masofaviy</p>
+                            <h4 class="font-bold text-sm">UI/UX Designer (Mobile App)</h4>
+                            <p class="text-xs tg-hint mt-1">🏢 Upwork • 🌍 Global</p>
                         </div>
                         <span class="bg-green-100 text-green-800 text-[10px] px-2 py-1 rounded-md font-bold">$3000+</span>
                     </div>
@@ -108,157 +121,171 @@
         </div>
     </main>
 
-    <!-- TAB: JOBS -->
-    <main id="tab-jobs" class="p-4 space-y-4 tab-content hidden">
-        <h2 class="text-xl font-bold mb-4">Vakansiyalar</h2>
-        <!-- Filters -->
+    <!-- 2-TAB: VAKANSIYALAR RO'YXATI -->
+    <main id="tab-jobs" class="p-4 space-y-4 tab-content hidden animate-fade-in">
+        <h2 class="text-xl font-bold mb-2">Vakansiyalar Katalogi</h2>
+        
+        <!-- Filtrlar -->
         <div class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide" id="filter-buttons">
-            <button onclick="filterJobs('all')" class="filter-btn bg-blue-500 text-white text-xs px-3 py-1.5 rounded-full whitespace-nowrap" data-category="all">Hammasi</button>
-            <button onclick="filterJobs('it')" class="filter-btn tg-card text-xs px-3 py-1.5 rounded-full whitespace-nowrap" data-category="it">💻 IT / Dasturlash</button>
-            <button onclick="filterJobs('design')" class="filter-btn tg-card text-xs px-3 py-1.5 rounded-full whitespace-nowrap" data-category="design">🎨 Dizayn</button>
-            <button onclick="filterJobs('content')" class="filter-btn tg-card text-xs px-3 py-1.5 rounded-full whitespace-nowrap" data-category="content">📝 Matn</button>
+            <button onclick="filterJobs('all')" class="filter-btn bg-blue-500 text-white text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all shadow-md" data-category="all">Hammasi</button>
+            <button onclick="filterJobs('it')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="it">💻 IT / Dev</button>
+            <button onclick="filterJobs('design')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="design">🎨 Dizayn</button>
+            <button onclick="filterJobs('content')" class="filter-btn tg-card text-xs px-4 py-2 rounded-full whitespace-nowrap font-medium transition-all" data-category="content">📝 Matn</button>
         </div>
 
+        <!-- Vakansiyalar ro'yxati (Mock data) -->
         <div class="space-y-4 mt-2" id="job-list">
-            <!-- Job Card -->
+            
             <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="it">
                 <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl">🚀</div>
+                    <div class="w-12 h-12 rounded-lg bg-blue-50 text-blue-500 flex items-center justify-center text-xl font-bold">HH</div>
                     <div>
                         <h4 class="font-bold text-sm">Full-stack React/Node.js Dev</h4>
-                        <p class="text-xs tg-hint mt-0.5">Upwork • Global</p>
+                        <p class="text-xs tg-hint mt-0.5">Andersen • Masofaviy</p>
                     </div>
                 </div>
-                <p class="text-xs mb-4 line-clamp-2">Katta xalqaro loyiha uchun tajribali Full-stack dasturchi qidiryapmiz. Ingliz tilini bilish shart...</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500">2 soat oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="alert('Bot orqali ariza topshiring')">Ko'rish</button>
+                <p class="text-xs mb-4 line-clamp-2 tg-hint">Katta xalqaro loyiha uchun tajribali Full-stack dasturchi qidiryapmiz. Ingliz tilini bilish B2 darajada shart...</p>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-xs font-bold tg-hint">2 soat oldin</span>
+                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://hh.ru')">To'liq ko'rish</button>
                 </div>
             </div>
             
-            <div class="tg-card p-4 rounded-2xl shadow-sm">
+            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="design">
                 <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl">💼</div>
+                    <div class="w-12 h-12 rounded-lg bg-purple-50 text-purple-500 flex items-center justify-center text-xl">🎨</div>
                     <div>
-                        <h4 class="font-bold text-sm">Project Manager (Remote)</h4>
+                        <h4 class="font-bold text-sm">Product Designer (Figma)</h4>
                         <p class="text-xs tg-hint mt-0.5">Payme • O'zbekiston</p>
                     </div>
                 </div>
-                <p class="text-xs mb-4 line-clamp-2">IT jamoani boshqarish, sprintlarni rejalashtirish va loyihani vaqtida topshirish...</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500">5 soat oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="alert('Bot orqali ariza topshiring')">Ko'rish</button>
+                <p class="text-xs mb-4 line-clamp-2 tg-hint">Mobil ilova interfeysini yangilash uchun kreativ dizayner kerak. Prototyping va User Testing tajribasi zarur.</p>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-xs font-bold tg-hint">5 soat oldin</span>
+                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://uzjobs.com')">To'liq ko'rish</button>
                 </div>
             </div>
 
-            <!-- New Design Job Card for filtering demonstration -->
-            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="design" style="display: block;">
+            <div class="job-card tg-card p-4 rounded-2xl shadow-sm" data-category="content">
                 <div class="flex gap-3 mb-3">
-                    <div class="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center text-xl">🎨</div>
+                    <div class="w-12 h-12 rounded-lg bg-green-50 text-green-500 flex items-center justify-center text-xl">✍️</div>
                     <div>
-                        <h4 class="font-bold text-sm">UI/UX Designer (Mobile App)</h4>
-                        <p class="text-xs tg-hint mt-0.5">MetaDesign • Masofaviy</p>
+                        <h4 class="font-bold text-sm">SMM Copywriter</h4>
+                        <p class="text-xs tg-hint mt-0.5">Upwork • Global</p>
                     </div>
                 </div>
-                <p class="text-xs mb-4 line-clamp-2">Fintech mobil ilovasi uchun zamonaviy va qulay dizayn yaratish. Figma, Prototyping va User Testing tajribasi zarur...</p>
-                <div class="flex justify-between items-center">
-                    <span class="text-xs font-bold text-gray-500">1 kun oldin</span>
-                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="alert('Bot orqali ariza topshiring')">Ko'rish</button>
+                <p class="text-xs mb-4 line-clamp-2 tg-hint">Kripto loyiha uchun ijtimoiy tarmoqlarga postlar yozish. SEO asoslarini bilish va ChatGPT dan foydalana olish talab etiladi.</p>
+                <div class="flex justify-between items-center border-t border-gray-100 pt-3">
+                    <span class="text-xs font-bold tg-hint">1 kun oldin</span>
+                    <button class="tg-button px-4 py-1.5 rounded-lg text-xs font-bold" onclick="openJobLink('https://upwork.com')">To'liq ko'rish</button>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- 3-TAB: AI ASBOBLAR -->
+    <main id="tab-ai" class="p-4 space-y-4 tab-content hidden animate-fade-in">
+        <h2 class="text-xl font-bold mb-1">AI Yordamchi</h2>
+        <p class="text-xs tg-hint mb-4">Ushbu asboblarni bosish orqali bot chatiga o'ting va sun'iy intellektdan foydalaning.</p>
+        
+        <div class="grid grid-cols-2 gap-3">
+            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_cl')">
+                <div class="text-3xl mb-2">📝</div>
+                <h3 class="text-sm font-bold text-gray-800">Cover Letter</h3>
+                <p class="text-[10px] tg-hint mt-1">Ishga kirish xati</p>
+            </div>
+            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_upwork')">
+                <div class="text-3xl mb-2">🚀</div>
+                <h3 class="text-sm font-bold text-gray-800">Upwork Bid</h3>
+                <p class="text-[10px] tg-hint mt-1">Winning Proposal</p>
+            </div>
+            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_estimate')">
+                <div class="text-3xl mb-2">💰</div>
+                <h3 class="text-sm font-bold text-gray-800">Narx Tahlili</h3>
+                <p class="text-[10px] tg-hint mt-1">Loyiha narxini bilish</p>
+            </div>
+            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition" onclick="sendToBot('tool_interview')">
+                <div class="text-3xl mb-2">🎙</div>
+                <h3 class="text-sm font-bold text-gray-800">Mock Intervyu</h3>
+                <p class="text-[10px] tg-hint mt-1">Suhbatga tayyorlanish</p>
+            </div>
+            <div class="tg-card p-5 rounded-2xl shadow-sm text-center cursor-pointer hover:bg-gray-50 transition col-span-2 flex items-center justify-center gap-4" onclick="sendToBot('tool_invoice')">
+                <div class="text-3xl">🧾</div>
+                <div class="text-left">
+                    <h3 class="text-sm font-bold text-gray-800">AI Invoice Generator</h3>
+                    <p class="text-[10px] tg-hint mt-0.5">Mijoz uchun rasmiy hisob-faktura yasash</p>
                 </div>
             </div>
         </div>
     </main>
 
-    <!-- TAB: AI TOOLS -->
-    <main id="tab-ai" class="p-4 space-y-4 tab-content hidden">
-        <h2 class="text-xl font-bold mb-2">AI Asboblar</h2>
-        <p class="text-sm tg-hint mb-4">Maktublar, shartnomalar va intervyularni sun'iy intellektga topshiring.</p>
-        
-        <div class="grid grid-cols-2 gap-3">
-            <div class="tg-card p-4 rounded-2xl shadow-sm text-center cursor-pointer active:scale-95 transition-transform" onclick="alert('Bu funksiya bot orqali ishlaydi')">
-                <div class="text-3xl mb-2">📝</div>
-                <h3 class="text-sm font-bold">Cover Letter</h3>
-            </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm text-center cursor-pointer active:scale-95 transition-transform">
-                <div class="text-3xl mb-2">🚀</div>
-                <h3 class="text-sm font-bold">Upwork Bid</h3>
-            </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm text-center cursor-pointer active:scale-95 transition-transform">
-                <div class="text-3xl mb-2">💰</div>
-                <h3 class="text-sm font-bold">Narx Tahlili</h3>
-            </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm text-center cursor-pointer active:scale-95 transition-transform">
-                <div class="text-3xl mb-2">🎙</div>
-                <h3 class="text-sm font-bold">Mock Intervyu</h3>
-            </div>
-            <div class="tg-card p-4 rounded-2xl shadow-sm text-center cursor-pointer active:scale-95 transition-transform col-span-2 flex items-center justify-center gap-3">
-                <div class="text-2xl">🧾</div>
-                <h3 class="text-sm font-bold">AI Invoice (Hisob-faktura)</h3>
-            </div>
-        </div>
-    </main>
-
-    <!-- Bottom Navigation -->
-    <nav class="bottom-nav fixed bottom-0 w-full flex justify-around items-center pb-safe pt-2 px-2 pb-2 shadow-[0_-2px_10px_rgba(0,0,0,0.05)] z-50">
-        <button onclick="switchTab('home')" class="nav-item active flex flex-col items-center p-2 w-16" data-target="home">
+    <!-- Bottom Navigation (Pastki Menyu) -->
+    <nav class="bottom-nav fixed bottom-0 w-full flex justify-around items-center pb-safe pt-2 px-2 pb-3 z-50">
+        <button onclick="switchTab('home')" class="nav-item active flex flex-col items-center p-2 w-20 transition-colors" data-target="home">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
-            <span class="text-[10px] font-medium">Asosiy</span>
+            <span class="text-[10px] font-bold">Asosiy</span>
         </button>
-        <button onclick="switchTab('jobs')" class="nav-item flex flex-col items-center p-2 w-16 tg-hint" data-target="jobs">
+        <button onclick="switchTab('jobs')" class="nav-item flex flex-col items-center p-2 w-20 tg-hint transition-colors" data-target="jobs">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-            <span class="text-[10px] font-medium">Ishlar</span>
+            <span class="text-[10px] font-bold">Ishlar</span>
         </button>
-        <button onclick="switchTab('ai')" class="nav-item flex flex-col items-center p-2 w-16 tg-hint" data-target="ai">
+        <button onclick="switchTab('ai')" class="nav-item flex flex-col items-center p-2 w-20 tg-hint transition-colors" data-target="ai">
             <svg class="w-6 h-6 mb-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            <span class="text-[10px] font-medium">AI Tools</span>
+            <span class="text-[10px] font-bold">AI Tools</span>
         </button>
     </nav>
 
     <script>
-        // Telegram Web App API initsializatsiyasi
+        // Telegram Web App API
         const tg = window.Telegram.WebApp;
-        tg.expand(); // Ekranni to'liq qoplab olish
+        tg.expand(); // Ekranni to'liq egallash
         tg.ready();
 
-        // Foydalanuvchi ismini va harfini o'rnatish
+        // Agar mavzu o'zgarsa, WebApp foni ham o'zgaradi
+        tg.setHeaderColor('secondary_bg_color');
+
+        // Foydalanuvchi ma'lumotlarini yuklash
         if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
             const user = tg.initDataUnsafe.user;
             document.getElementById('user-name').innerText = user.first_name;
             document.getElementById('user-photo').innerText = user.first_name.charAt(0).toUpperCase();
+            if(user.is_premium) {
+                document.getElementById('user-status').innerText = "Premium Frilanser 💎";
+                document.getElementById('user-status').classList.add('text-purple-500');
+            }
         }
 
-        // Tablarni almashtirish logikasi
+        // Tablarni almashtirish funksiyasi
         function switchTab(tabId) {
-            // Hamma tablarni yashirish
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-            // Tanlangan tabni ko'rsatish
             document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
-            // Bottom Nav faollik holati
             document.querySelectorAll('.nav-item').forEach(el => {
-                el.classList.remove('active', 'text-blue-500');
+                el.classList.remove('active');
                 el.classList.add('tg-hint');
                 if(el.dataset.target === tabId) {
                     el.classList.add('active');
                     el.classList.remove('tg-hint');
                 }
             });
+            // Haptic feedback (Vibratsiya effekti)
+            tg.HapticFeedback.selectionChanged();
         }
 
-        // Ishlarni saralash (Filter) logikasi
+        // Ishlarni filtrlash
         function filterJobs(category) {
-            // Tugmalar dizaynini yangilash
+            tg.HapticFeedback.impactOccurred('light');
             document.querySelectorAll('.filter-btn').forEach(btn => {
                 if (btn.dataset.category === category) {
-                    btn.classList.add('bg-blue-500', 'text-white');
+                    btn.classList.add('bg-blue-500', 'text-white', 'shadow-md');
                     btn.classList.remove('tg-card');
                 } else {
-                    btn.classList.remove('bg-blue-500', 'text-white');
+                    btn.classList.remove('bg-blue-500', 'text-white', 'shadow-md');
                     btn.classList.add('tg-card');
                 }
             });
 
-            // Kartochkalarni filtrlash
             document.querySelectorAll('.job-card').forEach(card => {
                 if (category === 'all' || card.dataset.category === category) {
                     card.style.display = 'block';
@@ -266,6 +293,26 @@
                     card.style.display = 'none';
                 }
             });
+        }
+
+        // Saytni ochish funksiyasi
+        function openJobLink(url) {
+            tg.openLink(url);
+        }
+
+        // Botga buyruq yuborish va oynani yopish
+        function sendToBot(action) {
+            tg.HapticFeedback.impactOccurred('medium');
+            
+            // Xabar yuborish (Faqat Keyboard Button orqali ishlaganda sendData ishlaydi)
+            try {
+                tg.sendData(JSON.stringify({action: action}));
+            } catch (e) {
+                // Agar Inline tugmadan ochilgan bo'lsa, xabar yuborish uchun showAlert ishlatamiz
+                tg.showAlert("Ushbu funksiyani ishlatish uchun bot chatiga qayting va menyudan tanlang!");
+            }
+            
+            setTimeout(() => { tg.close(); }, 1500);
         }
     </script>
 </body>
